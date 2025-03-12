@@ -1,12 +1,35 @@
-# Example file showing a circle moving on screen
 import pygame
 from random import randint
 
-# pygame setup
 pygame.init()
+
+
+class Alien(pygame.sprite.Sprite):
+    def __init__(self, *groups):
+        super().__init__(*groups)
+        self.image = pygame.image.load('pics/charactors/AlienSprites/alienBlue_stand.png').convert_alpha()
+        self.rect = self.image.get_rect(midbottom=(200, 615))
+        self.gravity = 0
+
+    def player_animation(self) -> None:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and self.rect.y == 520:
+            self.gravity = -20
+
+    def apply_gravity(self) -> None:
+        self.gravity += 1
+        self.rect.y += self.gravity
+        if self.rect.y >= 520:
+            self.rect.y = 520
+
+    def update(self):
+        self.player_animation()
+        self.apply_gravity()
+
 
 screen_width, screen_height = 1080, 720
 screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('土族大战土家族')
 clock = pygame.time.Clock()
 game_active = False
 dt = 0
@@ -15,7 +38,10 @@ current_time = 0
 game_score = 0
 
 enemies_list = []
-def desplay_score():
+
+player = pygame.sprite.GroupSingle()
+player.add(Alien())
+def desplay_score() -> int:
     pygame.time.get_ticks()
     score = int(pygame.time.get_ticks() / 1000) - current_time
     score_surf = game_font.render(f'得分：{score}', False, (0, 0, 0))
@@ -23,20 +49,29 @@ def desplay_score():
     screen.blit(score_surf, score_rect)
     return score
 
-def display_enemies_move(enemies_list: list):
+def display_enemies_move(enemies_list: list) -> None:
     global game_active
     if not enemies_list: return
-
     for enemy in enemies_list:
-        enemy.x -= randint(1, 10)
+        enemy.x -= 2
         if enemy.x <= -100:
             enemies_list.remove(enemy)
-        if alien_rect.colliderect(enemy):
-            game_active = False
         if enemy.bottom == 615:
             screen.blit(current_snail_frame, enemy)
         else:
             screen.blit(current_bee_frame, enemy)
+        
+
+def game_collision(alien_rect: pygame.Rect, enemies_list: list) -> bool:
+    for enemy in enemies_list:
+        if alien_rect.colliderect(enemy):
+            return False
+    return True
+
+
+def alien_animation():
+    global alien_index, alien_frames
+    
 
 # 背景
 background = pygame.image.load('pics/Backgrounds/backgrounds.png').convert()
@@ -55,9 +90,9 @@ alien_frame_folder = 'pics/charactors/AlienSprites/'
 alien_frames = [
     pygame.image.load(f'{alien_frame_folder}alienBlue_walk{i}.png').convert_alpha() for i in [1,2]
 ]
-
+alien_index = 0
 alien_jump_frames = pygame.image.load('pics/charactors/AlienSprites/alienBlue_jump.png').convert_alpha()
-alien_rect = alien_frames[0].get_rect()
+alien_rect = alien_frames[alien_index].get_rect()
 alien_gravity = 0
 
 # 静态外星人站立
@@ -72,14 +107,16 @@ snail_frames = [
     pygame.image.load(f'{enemy_frame_folder}snail.png').convert_alpha(),
     pygame.image.load(f'{enemy_frame_folder}snail_walk.png').convert_alpha()
 ]
-snail_rect = snail_frames[0].get_rect(midbottom=(1080, 615))
+snail_index = 0
+snail_rect = snail_frames[snail_index].get_rect(midbottom=(1080, 615))
 
 # 小蜜蜂
 bee_frames = [
     pygame.image.load(f'{enemy_frame_folder}bee.png').convert_alpha(),
     pygame.image.load(f'{enemy_frame_folder}bee_fly.png').convert_alpha()
 ]
-bee_rect = bee_frames[0].get_rect(midbottom=(1080, 415))
+bee_index = 0
+bee_rect = bee_frames[bee_index].get_rect(midbottom=(1080, 415))
 
 # 动画参数
 frame_time = 0
@@ -106,11 +143,9 @@ while True:
             if event.type == pygame.KEYDOWN and alien_rect.y == 520:
                 if event.key == pygame.K_SPACE:
                     alien_gravity = -20
-            if event.type == game_timer:
-                if randint(0, 1):
-                    enemies_list.append(snail_frames[0].get_rect(midbottom=(randint(1080, 1400), 615)))
-                else:
-                    enemies_list.append(bee_frames[0].get_rect(midbottom=(randint(1080, 1400), 415)))
+            if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                alien_gravity = 0
+        
         else:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
@@ -120,6 +155,12 @@ while True:
                 snail_rect.x = 1180
                 bee_rect.x = 1180
                 enemies_list.clear()
+
+        if event.type == game_timer and game_active:
+                if randint(0, 1):
+                    enemies_list.append(snail_frames[frame_index].get_rect(midbottom=(randint(1080, 1400), 615)))
+                else:
+                    enemies_list.append(bee_frames[0].get_rect(midbottom=(randint(1080, 1400), 415)))
 
     if game_active:
         screen.blit(background, (0, 0))
@@ -131,19 +172,10 @@ while True:
             frame_index = (frame_index + 1) % len(alien_frames)
             frame_time = 0
 
-        # 显示当前帧
+        # 显示小蜗牛
         current_snail_frame = snail_frames[frame_index]
-        # screen.blit(current_snail_frame, snail_rect)
-        # snail_rect.x -= randint(1, 10)
-        # if snail_rect.x <= -100:
-        #     snail_rect.x = 1180
-
         # 显示小蜜蜂
         current_bee_frame = bee_frames[frame_index]
-        # screen.blit(current_bee_frame, bee_rect)
-        # bee_rect.x -= randint(1,5)
-        # if bee_rect.x <= -100:
-        #     bee_rect.x = 1180
 
         current_alien_frame = alien_frames[frame_index]
         if alien_rect.y == 520:
@@ -155,26 +187,20 @@ while True:
         alien_gravity += 1
         alien_rect.y += alien_gravity
         if alien_rect.y >= 520:
-            alien_rect.y = 520   
-
-        if alien_rect.colliderect(snail_rect):
-            game_active = False
-
-        if alien_rect.colliderect(bee_rect):
-            game_active = False
+            alien_rect.y = 520        
 
         # 获取按键状态
         keys = pygame.key.get_pressed()
-        # if keys[pygame.K_w]:
-        #     y = max(y - speed, 0)
-        # if keys[pygame.K_s]:
-        #     y = min(y + speed, screen_height - alien_frames[0].get_height())
         if keys[pygame.K_a]:
             x = max(x - speed, 0)
         if keys[pygame.K_d]:
             x = min(x + speed, screen_width - alien_frames[0].get_width())
 
+        player.draw(screen)
+        player.update()
+
         display_enemies_move(enemies_list)
+        game_active = game_collision(alien_rect, enemies_list)
     else:
         screen.fill((35, 135, 200))        
         pygame.draw.rect(screen, "pink", logo_rect)
