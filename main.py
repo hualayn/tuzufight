@@ -28,12 +28,15 @@ def display_enemies_move(enemies_list: list):
     if not enemies_list: return
 
     for enemy in enemies_list:
-        enemy.x -= 2
+        enemy.x -= randint(1, 10)
         if enemy.x <= -100:
             enemies_list.remove(enemy)
         if alien_rect.colliderect(enemy):
             game_active = False
-        screen.blit(current_snail_frame, enemy)
+        if enemy.bottom == 615:
+            screen.blit(current_snail_frame, enemy)
+        else:
+            screen.blit(current_bee_frame, enemy)
 
 # 背景
 background = pygame.image.load('pics/Backgrounds/backgrounds.png').convert()
@@ -70,6 +73,13 @@ snail_frames = [
 ]
 snail_rect = snail_frames[0].get_rect(midbottom=(1080, 615))
 
+# 小蜜蜂
+bee_frames = [
+    pygame.image.load(f'{enemy_frame_folder}bee.png').convert_alpha(),
+    pygame.image.load(f'{enemy_frame_folder}bee_fly.png').convert_alpha()
+]
+bee_rect = bee_frames[0].get_rect(midbottom=(1080, 415))
+
 # 动画参数
 frame_time = 0
 frame_rate = 100
@@ -81,7 +91,7 @@ y = 520
 speed = 6
 
 game_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(game_timer, 5000)
+pygame.time.set_timer(game_timer, 2000)
 
 while True:
     # poll for events
@@ -96,7 +106,10 @@ while True:
                 if event.key == pygame.K_SPACE:
                     alien_gravity = -50  # 初始向上速度
             if event.type == game_timer:
-                enemies_list.append(snail_frames[0].get_rect(midbottom=(randint(1080, 1400), 615)))
+                if randint(0, 1):
+                    enemies_list.append(snail_frames[0].get_rect(midbottom=(randint(1080, 1400), 615)))
+                else:
+                    enemies_list.append(bee_frames[0].get_rect(midbottom=(randint(1080, 1400), 415)))
         else:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 game_active = True
@@ -104,6 +117,7 @@ while True:
                 x, y = 50, 520
                 alien_gravity = 0
                 snail_rect.x = 1180
+                bee_rect.x = 1180
                 enemies_list.clear()
 
     if game_active:
@@ -118,10 +132,17 @@ while True:
 
         # 显示当前帧
         current_snail_frame = snail_frames[frame_index]
-        screen.blit(current_snail_frame, snail_rect)
-        snail_rect.x -= randint(1, 10)
-        if snail_rect.x <= -100:
-            snail_rect.x = 1180
+        # screen.blit(current_snail_frame, snail_rect)
+        # snail_rect.x -= randint(1, 10)
+        # if snail_rect.x <= -100:
+        #     snail_rect.x = 1180
+
+        # 显示小蜜蜂
+        current_bee_frame = bee_frames[frame_index]
+        # screen.blit(current_bee_frame, bee_rect)
+        # bee_rect.x -= randint(1,5)
+        # if bee_rect.x <= -100:
+        #     bee_rect.x = 1180
 
         current_alien_frame = alien_frames[frame_index]
         if alien_rect.y == 520:
@@ -140,6 +161,9 @@ while True:
             alien_gravity = 0
 
         if alien_rect.colliderect(snail_rect):
+            game_active = False
+
+        if alien_rect.colliderect(bee_rect):
             game_active = False
 
         # 获取按键状态
