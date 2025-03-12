@@ -62,7 +62,6 @@ alien_stand_frame = pygame.image.load('pics/charactors/AlienSprites/alienBlue_st
 alien_stand_frame_scaled = pygame.transform.rotozoom(alien_stand_frame, 0, 2)
 alien_stand_frame_rect = alien_stand_frame_scaled.get_rect(midbottom=(screen_width/2, 400))
 
-
 # 小蜗牛
 enemy_frame_folder = 'pics/charactors/EnemySprites/'
 snail_frames = [
@@ -95,7 +94,7 @@ while True:
         if game_active:           
             if event.type == pygame.KEYDOWN and alien_rect.y == 520:
                 if event.key == pygame.K_SPACE:
-                    alien_gravity = -20
+                    alien_gravity = -50  # 初始向上速度
             if event.type == game_timer:
                 enemies_list.append(snail_frames[0].get_rect(midbottom=(randint(1080, 1400), 615)))
         else:
@@ -129,26 +128,25 @@ while True:
             screen.blit(current_alien_frame, alien_rect)
         else:
             screen.blit(alien_jump_frames, alien_rect)
-        # alien_rect.x, alien_rect.y = x, y
-        alien_rect.x = x
+        alien_rect.x, alien_rect.y = x, y
         
-        alien_gravity += 1
-        alien_rect.y += alien_gravity
-        if alien_rect.y >= 520:
-            alien_rect.y = 520   
+        # 简化的自由落体运动
+        alien_gravity += 4  # 重力加速度
+        y += alien_gravity  # 应用重力
+        
+        # 地面碰撞检测
+        if y >= 520:
+            y = 520
+            alien_gravity = 0
 
         if alien_rect.colliderect(snail_rect):
             game_active = False
 
         # 获取按键状态
         keys = pygame.key.get_pressed()
-        # if keys[pygame.K_w]:
-        #     y = max(y - speed, 0)
-        # if keys[pygame.K_s]:
-        #     y = min(y + speed, screen_height - alien_frames[0].get_height())
-        if keys[pygame.K_a]:
+        if keys[pygame.K_LEFT]:
             x = max(x - speed, 0)
-        if keys[pygame.K_d]:
+        if keys[pygame.K_RIGHT]:
             x = min(x + speed, screen_width - alien_frames[0].get_width())
 
         display_enemies_move(enemies_list)
