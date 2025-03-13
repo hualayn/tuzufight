@@ -43,7 +43,7 @@ class Game:
 
             if self.game_active:
                 self.display_background()
-                self.display_score()
+                self.game_score = self.display_score()
                 self.player.draw(self.screen)
                 self.player.update()
                 self.enemies.draw(self.screen)
@@ -56,7 +56,7 @@ class Game:
                 if self.game_score == 0:                    
                     self.display_game_start()
                 else:
-                    self.display_game_over()
+                    self.show_score()
                 
             pygame.display.flip()
             self.clock.tick(FRAME_RATE)
@@ -108,39 +108,12 @@ class Game:
         game_over_rect = game_over.get_rect(midbottom=(SCREEN_WIDTH/2, 350))
         self.screen.blit(game_over, game_over_rect)
 
+    def show_score(self) -> None:
+        '''游戏结束，显示最终得分'''
+        score_board = self.game_font.render(f'得分：{self.game_score}', False, (0, 0, 0))
+        score_board_rect = score_board.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
+        self.screen.blit(score_board, score_board_rect)
 
-# while True:
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             pygame.quit()
-#             exit()
-
-#         if not game_active:
-#             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-#                 game_active = True            
-
-#     if game_active:
-#         screen.blit(background, (0, 0))
-#         game_score = desplay_score()        
-
-#         player.draw(screen)
-#         player.update()
-#         enemies.draw(screen)
-#         enemies.update()
-#     else:
-#         screen.fill((35, 135, 200))        
-#         pygame.draw.rect(screen, "pink", logo_rect)
-#         screen.blit(logo, logo_rect)
-#         score_board = game_font.render(f'得分：{game_score}', False, (0, 0, 0))
-#         score_board_rect = score_board.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
-#         if game_score == 0:
-#             screen.blit(game_start, game_start_rect)
-#         else:
-#             screen.blit(score_board, score_board_rect)
-#         current_time = int(pygame.time.get_ticks() / 1000)
-
-#     pygame.display.flip()
-#     dt = clock.tick(60)
 
 if __name__ == '__main__':
     game = Game()
