@@ -9,7 +9,7 @@ from src.display import (
     show_score,
 )
 from src.player import Alien
-from src.enemies import Snail, Bee, Enemy
+from src.enemies import Snail, Bee, Bat, Snake, Enemy
 from src.collision import detect_collision
 from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE
 
@@ -24,16 +24,15 @@ class Game:
         self.game_active = False
         self.current_time = 0
         self.game_score = 0
+        self.game_timer = 0
+        self.setup()
+    def setup(self) -> None:
         self.player = pygame.sprite.GroupSingle()
         self.player.add(Alien())
         self.enemies = pygame.sprite.Group()
         self.enemies.add(Enemy(Bee()))
-        self.set_animal_timer()      
-        self.setup()  
-
-    def setup(self) -> None:
+        self.set_animal_timer()         
         set_bg_music()
-
     def run(self) -> None:
         while True:
             for event in pygame.event.get():
@@ -46,8 +45,8 @@ class Game:
                         self.game_active = True
                         self.current_time = int(pygame.time.get_ticks() / 1000)
 
-                if event.type == pygame.USEREVENT + 1:
-                    animal = choice((Snail, Snail, Bee))
+                if event.type == self.game_timer:
+                    animal = choice((Snake, Snail, Bee, Bat))
                     self.enemies.add(Enemy(animal()))
 
             if self.game_active:
@@ -77,8 +76,8 @@ class Game:
 
     def set_animal_timer(self) -> None:
         '''设置怪物出现频率'''
-        game_timer = pygame.USEREVENT + 1
-        pygame.time.set_timer(game_timer, 3000)  # 3秒出现一个小怪物
+        self.game_timer = pygame.USEREVENT + 1
+        pygame.time.set_timer(self.game_timer, 3000)  # 3秒出现一个小怪物
 
 
 if __name__ == '__main__':

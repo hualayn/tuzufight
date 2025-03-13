@@ -26,6 +26,29 @@ class Bee:
         self.speed = 5
 
 
+class Snake:
+    def __init__(self):
+        self.move = [
+            pygame.image.load(f'{pics_folder}snake.png').convert_alpha(),
+            pygame.image.load(f'{pics_folder}snake_walk.png').convert_alpha()
+        ]
+        self.rect = self.move[0].get_rect(midbottom=(randint(1080, 1300), 615))
+        self.frame_speed = 0.2
+        self.speed = 3
+
+
+class Bat:
+    def __init__(self):
+        self.move = [
+            pygame.image.load(f'{pics_folder}bat.png').convert_alpha(),
+            pygame.image.load(f'{pics_folder}bat_fly.png').convert_alpha()
+        ]
+        self.rect = self.move[0].get_rect(midbottom=(randint(1080, 1300), 415))
+        self.frame_speed = 0.3
+        self.speed = 7
+
+
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, animal: Snail | Bee = None):
         super().__init__()
