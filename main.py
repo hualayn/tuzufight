@@ -4,7 +4,6 @@ from src.background import set_bg_music, display_background
 from src.display import (
     display_logo,
     display_alien_stand,
-    display_game_over,
     display_score,
     display_game_start,
     show_score,
@@ -63,6 +62,7 @@ class Game:
                 self.screen.fill((35, 135, 200))
                 display_logo(self.game_font, self.screen)
                 display_alien_stand(self.screen)
+                self.reset_game()
                 if self.game_score == 0:                    
                     display_game_start(self.game_font, self.screen)
                 else:
@@ -71,10 +71,14 @@ class Game:
             pygame.display.flip()
             self.clock.tick(FRAME_RATE)
 
+    def reset_game(self) -> None:
+        self.player.empty()
+        self.player.add(Alien())
+
     def set_animal_timer(self) -> None:
         '''设置怪物出现频率'''
         game_timer = pygame.USEREVENT + 1
-        pygame.time.set_timer(game_timer, 5000)  # 2秒出现一个小怪物
+        pygame.time.set_timer(game_timer, 3000)  # 3秒出现一个小怪物
 
 
 if __name__ == '__main__':
