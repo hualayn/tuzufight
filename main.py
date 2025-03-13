@@ -1,239 +1,147 @@
 import pygame
-from random import randint
-
-pygame.init()
-
-
-class Alien(pygame.sprite.Sprite):
-    def __init__(self, *groups):
-        super().__init__(*groups)
-        alien_frame_folder = 'pics/charactors/AlienSprites/'
-        self.walk = [
-            pygame.image.load(f'{alien_frame_folder}alienBlue_walk{i}.png').convert_alpha() for i in [1,2]
-        ]
-        self.index = 0
-        self.image = self.walk[self.index]
-        self.jump = pygame.image.load('pics/charactors/AlienSprites/alienBlue_jump.png').convert_alpha()
-        self.rect = self.image.get_rect(midbottom=(200, 615))
-        self.gravity = 0
-        self.speed = 6
-
-    def player_animation(self) -> None:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and self.rect.y == 520:
-            self.gravity = -20
-        if keys[pygame.K_a]:
-            self.rect.x = max(0, self.rect.x - self.speed)
-        if keys[pygame.K_d]:
-            self.rect.x = min(screen_width - 100, self.rect.x + self.speed)
-
-    def apply_gravity(self) -> None:
-        self.gravity += 1
-        self.rect.y += self.gravity
-        if self.rect.y >= 520:
-            self.rect.y = 520
-
-    def animation_state(self) -> None:
-        if self.rect.y == 520:
-            self.index += 0.1
-            if self.index >= len(self.walk):
-                self.index = 0
-            self.image = self.walk[int(self.index)]
-        else:
-            self.image = self.jump
-
-    def update(self):
-        self.player_animation()
-        self.apply_gravity()
-        self.animation_state()
+import pygame.midi
+from random import choice
+from src.player import Alien
+from src.enemies import Snail, Bee, Enemy
+from src.collision import detect_collision
+from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE, BG_MUSIC
 
 
-screen_width, screen_height = 1080, 720
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('土族大战土家族')
-clock = pygame.time.Clock()
-game_active = False
-dt = 0
+class Game:
+    def __init__(self):
+        pygame.init()
+        pygame.midi.init()
+        pygame.display.set_caption('土族大战土家族')
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.game_font = pygame.font.Font(GAME_FONT, FONT_SIZE)
+        self.game_active = False
+        self.current_time = 0
+        self.game_score = 0
+        self.player = pygame.sprite.GroupSingle()
+        self.player.add(Alien())
+        self.enemies = pygame.sprite.Group()
+        self.enemies.add(Enemy(Bee()))
+        self.set_animal_timer()
+        self.set_bg_music()
 
-current_time = 0
-game_score = 0
+    def run(self) -> None:
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
 
-enemies_list = []
+                if not self.game_active:
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                        self.game_active = True
+                        self.current_time = int(pygame.time.get_ticks() / 1000)
 
-player = pygame.sprite.GroupSingle()
-player.add(Alien())
-def desplay_score() -> int:
-    pygame.time.get_ticks()
-    score = int(pygame.time.get_ticks() / 1000) - current_time
-    score_surf = game_font.render(f'得分：{score}', False, (0, 0, 0))
-    score_rect = score_surf.get_rect(midbottom=(screen_width/2, 150))
-    screen.blit(score_surf, score_rect)
-    return score
+                if event.type == pygame.USEREVENT + 1:
+                    animal = choice((Snail, Snail, Bee))
+                    self.enemies.add(Enemy(animal()))
 
-def display_enemies_move(enemies_list: list) -> None:
-    global game_active
-    if not enemies_list: return
-    for enemy in enemies_list:
-        enemy.x -= 2
-        if enemy.x <= -100:
-            enemies_list.remove(enemy)
-        if enemy.bottom == 615:
-            screen.blit(current_snail_frame, enemy)
-        else:
-            screen.blit(current_bee_frame, enemy)
-        
-
-def game_collision(alien_rect: pygame.Rect, enemies_list: list) -> bool:
-    for enemy in enemies_list:
-        if alien_rect.colliderect(enemy):
-            return False
-    return True
-
-
-def alien_animation():
-    global alien_index, alien_frames
-    
-
-# 背景
-background = pygame.image.load('pics/Backgrounds/backgrounds.png').convert()
-
-game_font = pygame.font.Font('fonts/SetoFont-1.ttf', 80)
-logo = game_font.render('土族大战土家族', True, (0, 0, 0))
-logo_rect = logo.get_rect(midbottom=(screen_width/2, 150))
-
-game_start = game_font.render('按下 空格 开始游戏', False, (0, 0, 0))
-game_start_rect = game_start.get_rect(midbottom=(screen_width/2, 550))
-
-game_over = game_font.render('GAME OVER', False, (0, 0, 0))
-game_over_rect = game_over.get_rect(midbottom=(screen_width/2, 350))
-# 外星人
-alien_frame_folder = 'pics/charactors/AlienSprites/'
-alien_frames = [
-    pygame.image.load(f'{alien_frame_folder}alienBlue_walk{i}.png').convert_alpha() for i in [1,2]
-]
-alien_index = 0
-alien_jump_frames = pygame.image.load('pics/charactors/AlienSprites/alienBlue_jump.png').convert_alpha()
-alien_rect = alien_frames[alien_index].get_rect()
-alien_gravity = 0
-
-# 静态外星人站立
-alien_stand_frame = pygame.image.load('pics/charactors/AlienSprites/alienBlue_stand.png').convert_alpha()
-alien_stand_frame_scaled = pygame.transform.rotozoom(alien_stand_frame, 0, 2)
-alien_stand_frame_rect = alien_stand_frame_scaled.get_rect(midbottom=(screen_width/2, 400))
-
-
-# 小蜗牛
-enemy_frame_folder = 'pics/charactors/EnemySprites/'
-snail_frames = [
-    pygame.image.load(f'{enemy_frame_folder}snail.png').convert_alpha(),
-    pygame.image.load(f'{enemy_frame_folder}snail_walk.png').convert_alpha()
-]
-snail_index = 0
-snail_rect = snail_frames[snail_index].get_rect(midbottom=(1080, 615))
-
-# 小蜜蜂
-bee_frames = [
-    pygame.image.load(f'{enemy_frame_folder}bee.png').convert_alpha(),
-    pygame.image.load(f'{enemy_frame_folder}bee_fly.png').convert_alpha()
-]
-bee_index = 0
-bee_rect = bee_frames[bee_index].get_rect(midbottom=(1080, 415))
-
-# 动画参数
-frame_time = 0
-frame_rate = 100
-frame_index = 0
-
-# 动画位置
-x = 50
-y = 520
-speed = 6
-
-game_timer = pygame.USEREVENT + 1
-pygame.time.set_timer(game_timer, 2000)
-
-while True:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            exit()
-
-        if game_active:           
-            if event.type == pygame.KEYDOWN and alien_rect.y == 520:
-                if event.key == pygame.K_SPACE:
-                    alien_gravity = -20
-            if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
-                alien_gravity = 0
-        
-        else:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                game_active = True
-                alien_rect.x, alien_rect.y = 0, 0
-                x, y = 50, 520
-                alien_gravity = 0
-                snail_rect.x = 1180
-                bee_rect.x = 1180
-                enemies_list.clear()
-
-        if event.type == game_timer and game_active:
-                if randint(0, 1):
-                    enemies_list.append(snail_frames[frame_index].get_rect(midbottom=(randint(1080, 1400), 615)))
+            if self.game_active:
+                self.display_background()
+                self.display_score()
+                self.player.draw(self.screen)
+                self.player.update()
+                self.enemies.draw(self.screen)
+                self.enemies.update()
+                self.game_active = detect_collision(self.player, self.enemies)
+            else:
+                self.screen.fill((35, 135, 200))
+                self.display_logo()
+                self.display_alien_stand()
+                if self.game_score == 0:                    
+                    self.display_game_start()
                 else:
-                    enemies_list.append(bee_frames[0].get_rect(midbottom=(randint(1080, 1400), 415)))
+                    self.display_game_over()
+                
+            pygame.display.flip()
+            self.clock.tick(FRAME_RATE)
 
-    if game_active:
-        screen.blit(background, (0, 0))
-        game_score = desplay_score()
+    def set_bg_music(self) -> None:
+        '''背景音乐'''
+        pygame.mixer.music.load(BG_MUSIC)
+        pygame.mixer.music.play(loops=-1)
+        pygame.mixer.music.set_volume(0.5)
+    def set_animal_timer(self) -> None:
+        '''设置怪物出现频率'''
+        game_timer = pygame.USEREVENT + 1
+        pygame.time.set_timer(game_timer, 5000)  # 2秒出现一个小怪物
 
-        frame_time += clock.get_rawtime()
-        
-        if frame_time >= 1000 / frame_rate:
-            frame_index = (frame_index + 1) % len(alien_frames)
-            frame_time = 0
+    def display_background(self) -> None:
+        '''背景'''
+        background = pygame.image.load('pics/Backgrounds/backgrounds.png').convert()
+        self.screen.blit(background, (0, 0))
 
-        # 显示小蜗牛
-        current_snail_frame = snail_frames[frame_index]
-        # 显示小蜜蜂
-        current_bee_frame = bee_frames[frame_index]
+    def display_logo(self) -> None:
+        '''游戏标题'''
+        logo = self.game_font.render('土族大战土家族', True, (0, 0, 0))
+        logo_rect = logo.get_rect(midbottom=(SCREEN_WIDTH/2, 150))
+        self.screen.blit(logo, logo_rect)
+    def display_score(self) -> int:
+        '''游戏分数'''
+        pygame.time.get_ticks()
+        score = int(pygame.time.get_ticks() / 1000) - self.current_time
+        score_surf = self.game_font.render(f'得分：{score}', False, (0, 0, 0))
+        score_rect = score_surf.get_rect(midbottom=(SCREEN_WIDTH/2, 150))
+        self.screen.blit(score_surf, score_rect)
+        return score
+    
+    def display_game_start(self) -> None:
+        '''游戏开始'''
+        game_start = self.game_font.render('按下 空格 开始游戏', False, (0, 0, 0))
+        game_start_rect = game_start.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
+        self.screen.blit(game_start, game_start_rect)
 
-        current_alien_frame = alien_frames[frame_index]
-        if alien_rect.y == 520:
-            screen.blit(current_alien_frame, alien_rect)
-        else:
-            screen.blit(alien_jump_frames, alien_rect)
-        alien_rect.x = x
-        
-        alien_gravity += 1
-        alien_rect.y += alien_gravity
-        if alien_rect.y >= 520:
-            alien_rect.y = 520        
+    def display_alien_stand(self) -> None:
+        '''游戏开始或失败时，玩家站立的姿态'''
+        alien_stand = pygame.transform.rotozoom(pygame.image.load('pics/charactors/AlienSprites/alienBlue_stand.png').convert_alpha(), 0, 2)
+        alien_stand_rect = alien_stand.get_rect(midbottom=(SCREEN_WIDTH/2, 400))
+        self.screen.blit(alien_stand, alien_stand_rect)
 
-        # 获取按键状态
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            x = max(x - speed, 0)
-        if keys[pygame.K_d]:
-            x = min(x + speed, screen_width - alien_frames[0].get_width())
+    def display_game_over(self) -> None:
+        '''游戏结束'''
+        game_over = self.game_font.render('GAME OVER', False, (0, 0, 0))
+        game_over_rect = game_over.get_rect(midbottom=(SCREEN_WIDTH/2, 350))
+        self.screen.blit(game_over, game_over_rect)
 
-        player.draw(screen)
-        player.update()
 
-        display_enemies_move(enemies_list)
-        game_active = game_collision(alien_rect, enemies_list)
-    else:
-        screen.fill((35, 135, 200))        
-        pygame.draw.rect(screen, "pink", logo_rect)
-        screen.blit(logo, logo_rect)
-        screen.blit(alien_stand_frame_scaled, alien_stand_frame_rect)
-        score_board = game_font.render(f'得分：{game_score}', False, (0, 0, 0))
-        score_board_rect = score_board.get_rect(midbottom=(screen_width/2, 550))
-        if game_score == 0:
-            screen.blit(game_start, game_start_rect)
-        else:
-            screen.blit(score_board, score_board_rect)
-        current_time = int(pygame.time.get_ticks() / 1000)
+# while True:
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             pygame.quit()
+#             exit()
 
-    pygame.display.flip()
-    dt = clock.tick(60)
+#         if not game_active:
+#             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+#                 game_active = True            
+
+#     if game_active:
+#         screen.blit(background, (0, 0))
+#         game_score = desplay_score()        
+
+#         player.draw(screen)
+#         player.update()
+#         enemies.draw(screen)
+#         enemies.update()
+#     else:
+#         screen.fill((35, 135, 200))        
+#         pygame.draw.rect(screen, "pink", logo_rect)
+#         screen.blit(logo, logo_rect)
+#         score_board = game_font.render(f'得分：{game_score}', False, (0, 0, 0))
+#         score_board_rect = score_board.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
+#         if game_score == 0:
+#             screen.blit(game_start, game_start_rect)
+#         else:
+#             screen.blit(score_board, score_board_rect)
+#         current_time = int(pygame.time.get_ticks() / 1000)
+
+#     pygame.display.flip()
+#     dt = clock.tick(60)
+
+if __name__ == '__main__':
+    game = Game()
+    game.run()
