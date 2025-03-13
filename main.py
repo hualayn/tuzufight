@@ -1,16 +1,23 @@
 import pygame
-import pygame.midi
 from random import choice
+from src.background import set_bg_music, display_background
+from src.display import (
+    display_logo,
+    display_alien_stand,
+    display_game_over,
+    display_score,
+    display_game_start,
+    show_score,
+)
 from src.player import Alien
 from src.enemies import Snail, Bee, Enemy
 from src.collision import detect_collision
-from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE, BG_MUSIC
+from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE
 
 
 class Game:
     def __init__(self):
         pygame.init()
-        pygame.midi.init()
         pygame.display.set_caption('土族大战土家族')
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -22,8 +29,11 @@ class Game:
         self.player.add(Alien())
         self.enemies = pygame.sprite.Group()
         self.enemies.add(Enemy(Bee()))
-        self.set_animal_timer()
-        self.set_bg_music()
+        self.set_animal_timer()      
+        self.setup()  
+
+    def setup(self) -> None:
+        set_bg_music()
 
     def run(self) -> None:
         while True:
@@ -42,8 +52,8 @@ class Game:
                     self.enemies.add(Enemy(animal()))
 
             if self.game_active:
-                self.display_background()
-                self.game_score = self.display_score()
+                display_background(self.screen)
+                self.game_score = display_score(self.game_font, self.screen, self.current_time)
                 self.player.draw(self.screen)
                 self.player.update()
                 self.enemies.draw(self.screen)
@@ -51,68 +61,20 @@ class Game:
                 self.game_active = detect_collision(self.player, self.enemies)
             else:
                 self.screen.fill((35, 135, 200))
-                self.display_logo()
-                self.display_alien_stand()
+                display_logo(self.game_font, self.screen)
+                display_alien_stand(self.screen)
                 if self.game_score == 0:                    
-                    self.display_game_start()
+                    display_game_start(self.game_font, self.screen)
                 else:
-                    self.show_score()
+                    show_score(self.game_font, self.screen, self.game_score)
                 
             pygame.display.flip()
             self.clock.tick(FRAME_RATE)
 
-    def set_bg_music(self) -> None:
-        '''背景音乐'''
-        pygame.mixer.music.load(BG_MUSIC)
-        pygame.mixer.music.play(loops=-1)
-        pygame.mixer.music.set_volume(0.5)
     def set_animal_timer(self) -> None:
         '''设置怪物出现频率'''
         game_timer = pygame.USEREVENT + 1
         pygame.time.set_timer(game_timer, 5000)  # 2秒出现一个小怪物
-
-    def display_background(self) -> None:
-        '''背景'''
-        background = pygame.image.load('pics/Backgrounds/backgrounds.png').convert()
-        self.screen.blit(background, (0, 0))
-
-    def display_logo(self) -> None:
-        '''游戏标题'''
-        logo = self.game_font.render('土族大战土家族', True, (0, 0, 0))
-        logo_rect = logo.get_rect(midbottom=(SCREEN_WIDTH/2, 150))
-        self.screen.blit(logo, logo_rect)
-    def display_score(self) -> int:
-        '''游戏分数'''
-        pygame.time.get_ticks()
-        score = int(pygame.time.get_ticks() / 1000) - self.current_time
-        score_surf = self.game_font.render(f'得分：{score}', False, (0, 0, 0))
-        score_rect = score_surf.get_rect(midbottom=(SCREEN_WIDTH/2, 150))
-        self.screen.blit(score_surf, score_rect)
-        return score
-    
-    def display_game_start(self) -> None:
-        '''游戏开始'''
-        game_start = self.game_font.render('按下 空格 开始游戏', False, (0, 0, 0))
-        game_start_rect = game_start.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
-        self.screen.blit(game_start, game_start_rect)
-
-    def display_alien_stand(self) -> None:
-        '''游戏开始或失败时，玩家站立的姿态'''
-        alien_stand = pygame.transform.rotozoom(pygame.image.load('pics/charactors/AlienSprites/alienBlue_stand.png').convert_alpha(), 0, 2)
-        alien_stand_rect = alien_stand.get_rect(midbottom=(SCREEN_WIDTH/2, 400))
-        self.screen.blit(alien_stand, alien_stand_rect)
-
-    def display_game_over(self) -> None:
-        '''游戏结束'''
-        game_over = self.game_font.render('GAME OVER', False, (0, 0, 0))
-        game_over_rect = game_over.get_rect(midbottom=(SCREEN_WIDTH/2, 350))
-        self.screen.blit(game_over, game_over_rect)
-
-    def show_score(self) -> None:
-        '''游戏结束，显示最终得分'''
-        score_board = self.game_font.render(f'得分：{self.game_score}', False, (0, 0, 0))
-        score_board_rect = score_board.get_rect(midbottom=(SCREEN_WIDTH/2, 550))
-        self.screen.blit(score_board, score_board_rect)
 
 
 if __name__ == '__main__':
