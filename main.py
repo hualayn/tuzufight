@@ -10,6 +10,7 @@ from src.display import (
 )
 from src.player import Alien
 from src.enemies import Snail, Bee, Bat, Snake, Enemy
+from src.bullets import Bullet
 from src.collision import detect_collision
 from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE
 
@@ -29,6 +30,8 @@ class Game:
     def setup(self) -> None:
         self.player = pygame.sprite.GroupSingle()
         self.player.add(Alien())
+        self.bullets = pygame.sprite.Group()
+        self.bullets.add(Bullet())
         self.enemies = pygame.sprite.Group()
         self.enemies.add(Enemy(Bee()))
         self.set_animal_timer()         
@@ -54,6 +57,7 @@ class Game:
                 self.game_score = display_score(self.game_font, self.screen, self.current_time)
                 self.player.draw(self.screen)
                 self.player.update()
+                self.bullets.draw(self.screen)
                 self.enemies.draw(self.screen)
                 self.enemies.update()
                 self.game_active = detect_collision(self.player, self.enemies)
