@@ -1,6 +1,8 @@
 import pygame
 from src.bullets import Bullet
 from .settings import SCREEN_WIDTH
+from typing import List
+
 
 class Alien(pygame.sprite.Sprite):
     def __init__(self, *groups):
@@ -16,7 +18,7 @@ class Alien(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(midbottom=(200, 615))
         self.gravity = 0
         self.speed = 10
-        self.status = None
+        self.bullets: List[Bullet] = []
 
     def walk(self) -> None:
         self.index += 0.1
@@ -31,11 +33,16 @@ class Alien(pygame.sprite.Sprite):
         self.image = self.jump_frame
 
     def shoot(self) -> None:
-        # self.bullets.add(Bullet())
-        ...
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        director = pygame.math.Vector2(mouse_x - self.rect.x, mouse_y - self.rect.y)
+        bullet = Bullet(self.rect.midtop, director)
+        self.bullets.append(bullet)
 
     def player_input(self) -> str:
         keys = pygame.key.get_pressed()
+        mouse = pygame.mouse.get_pressed()
+        if mouse[0]:
+            self.shoot()
         if keys[pygame.K_SPACE] and self.rect.y == 520:
             self.gravity = -20
         if keys[pygame.K_a]:
@@ -61,7 +68,12 @@ class Alien(pygame.sprite.Sprite):
             elif status in('left', 'right'):
                 self.walk()
 
-    def update(self):
+    def update(self, screen: pygame.Surface):
         status = self.player_input()
         self.apply_gravity()
         self.animation_state(status)
+        for bullet in self.bullets:
+            if bullet.position[0] > SCREEN_WIDTH or bullet.position[0] < 0 or bullet.position[1] < 0 or bullet.position[1] > SCREEN_WIDTH: 
+                self.bullets.remove(bullet)
+            bullet.draw(screen)
+            bullet.update()

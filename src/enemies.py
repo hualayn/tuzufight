@@ -55,7 +55,8 @@ class Enemy(pygame.sprite.Sprite):
         self.animation_index = 0
         self.animal = animal
         self.image = animal.move[self.animation_index]
-        self.rect = animal.rect        
+        self.rect = animal.rect
+        self.is_alive = True
     def update(self):
         self.animation_state()
         self.destroy()

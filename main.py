@@ -31,7 +31,7 @@ class Game:
         self.player.add(Alien())
         self.enemies = pygame.sprite.Group()
         self.enemies.add(Enemy(Bee()))        
-        self.set_animal_timer()         
+        self.set_animal_timer()
         set_bg_music()
     def run(self) -> None:
         while True:
@@ -53,11 +53,9 @@ class Game:
                 display_background(self.screen)
                 self.game_score = display_score(self.game_font, self.screen, self.current_time)
                 self.player.draw(self.screen)
-                self.player.update()
+                self.player.update(self.screen)
                 self.enemies.draw(self.screen)
                 self.enemies.update()
-                # self.bullets.draw(self.screen)
-                # self.bullets.update()
                 self.game_active = detect_collision(self.player, self.enemies)
             else:
                 self.screen.fill((35, 135, 200))
@@ -79,7 +77,7 @@ class Game:
     def set_animal_timer(self) -> None:
         '''设置怪物出现频率'''
         self.game_timer = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.game_timer, 3000)  # 3秒出现一个小怪物
+        pygame.time.set_timer(self.game_timer, 5000)  # 5秒出现一个小怪物
 
 
 if __name__ == '__main__':

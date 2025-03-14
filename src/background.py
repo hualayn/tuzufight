@@ -1,5 +1,5 @@
 import pygame
-from src.settings import SCREEN_WIDTH, BG_MUSIC
+from src.settings import BG_MUSIC
 def set_bg_music() -> None:
     '''背景音乐'''
     pygame.mixer.music.load(BG_MUSIC)
