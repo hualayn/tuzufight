@@ -9,8 +9,9 @@ from src.display import (
     show_score,
 )
 from src.player import Alien
+from src.bullets import Bullet
 from src.enemies import Snail, Bee, Bat, Snake, Enemy
-from src.collision import detect_collision
+from src.collision import detect_collision, detect_bullet_collision
 from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE
 
 
@@ -30,7 +31,8 @@ class Game:
         self.player = pygame.sprite.GroupSingle()
         self.player.add(Alien())
         self.enemies = pygame.sprite.Group()
-        self.enemies.add(Enemy(Bee()))        
+        self.enemies.add(Enemy(Bee()))
+        self.bullets = pygame.sprite.Group()
         self.set_animal_timer()
         set_bg_music()
     def run(self) -> None:
@@ -45,17 +47,26 @@ class Game:
                         self.game_active = True
                         self.current_time = int(pygame.time.get_ticks() / 1000)
 
-                if event.type == self.game_timer:
-                    animal = choice((Snake, Snail, Bee, Bat))
-                    self.enemies.add(Enemy(animal()))
+                else:
+                    if event.type == self.game_timer:
+                        animal = choice((Snake, Snail, Bee, Bat))
+                        self.enemies.add(Enemy(animal()))
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_x, mouse_y = pygame.mouse.get_pos()
+                        director = pygame.math.Vector2(mouse_x - self.player.sprites()[0].rect.x, mouse_y - self.player.sprites()[0].rect.y)
+                        bullet = Bullet(self.player.sprites()[0].rect.midtop, director)
+                        self.bullets.add(bullet)
 
             if self.game_active:
                 display_background(self.screen)
                 self.game_score = display_score(self.game_font, self.screen, self.current_time)
                 self.player.draw(self.screen)
-                self.player.update(self.screen)
+                self.player.update()
                 self.enemies.draw(self.screen)
                 self.enemies.update()
+                self.bullets.draw(self.screen)
+                self.bullets.update()
+                detect_bullet_collision(self.bullets, self.enemies)
                 self.game_active = detect_collision(self.player, self.enemies)
             else:
                 self.screen.fill((35, 135, 200))
