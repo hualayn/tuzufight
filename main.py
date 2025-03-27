@@ -12,7 +12,7 @@ from src.player import Alien
 from src.bullets import Bullet
 from src.enemies import Snail, Bee, Bat, Snake, Enemy
 from src.collision import detect_collision, detect_bullet_collision
-from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE
+from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT, FRAME_RATE, GAME_FONT, FONT_SIZE, ENEMY_EMERGE_TIME
 
 
 class Game:
@@ -26,12 +26,13 @@ class Game:
         self.current_time = 0
         self.game_score = 0
         self.game_timer = 0
+        self.dead_enemy = 0
         self.setup()
     def setup(self) -> None:
         self.player = pygame.sprite.GroupSingle()
         self.player.add(Alien())
         self.enemies = pygame.sprite.Group()
-        self.enemies.add(Enemy(Bee()))
+        self.enemies.add(Enemy(Bat()))
         self.bullets = pygame.sprite.Group()
         self.set_animal_timer()
         set_bg_music()
@@ -50,23 +51,24 @@ class Game:
                 else:
                     if event.type == self.game_timer:
                         animal = choice((Snake, Snail, Bee, Bat))
-                        self.enemies.add(Enemy(animal()))
+                        self.enemies.add(Enemy(animal(), self.player.sprite))
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         mouse_x, mouse_y = pygame.mouse.get_pos()
-                        director = pygame.math.Vector2(mouse_x - self.player.sprites()[0].rect.x, mouse_y - self.player.sprites()[0].rect.y)
+                        director = pygame.math.Vector2(mouse_x - self.player.sprite.rect.x, mouse_y - self.player.sprite.rect.y)
                         bullet = Bullet(self.player.sprites()[0].rect.midtop, director)
                         self.bullets.add(bullet)
 
             if self.game_active:
                 display_background(self.screen)
-                self.game_score = display_score(self.game_font, self.screen, self.current_time)
+                self.game_score = display_score(self.game_font, self.screen, self.dead_enemy * 10)
                 self.player.draw(self.screen)
                 self.player.update()
                 self.enemies.draw(self.screen)
                 self.enemies.update()
                 self.bullets.draw(self.screen)
                 self.bullets.update()
-                detect_bullet_collision(self.bullets, self.enemies)
+                if detect_bullet_collision(self.bullets, self.enemies):
+                    self.dead_enemy += 1
                 self.game_active = detect_collision(self.player, self.enemies)
             else:
                 self.screen.fill((35, 135, 200))
@@ -84,11 +86,12 @@ class Game:
     def reset_game(self) -> None:
         self.player.empty()
         self.player.add(Alien())
+        self.dead_enemy = 0
 
     def set_animal_timer(self) -> None:
         '''设置怪物出现频率'''
         self.game_timer = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.game_timer, 5000)  # 5秒出现一个小怪物
+        pygame.time.set_timer(self.game_timer, ENEMY_EMERGE_TIME)  # 1秒出现一个小怪物
 
 
 if __name__ == '__main__':

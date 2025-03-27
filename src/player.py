@@ -1,7 +1,5 @@
 import pygame
-from src.bullets import Bullet
 from .settings import SCREEN_WIDTH
-from typing import List
 
 
 class Alien(pygame.sprite.Sprite):

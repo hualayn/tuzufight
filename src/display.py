@@ -10,10 +10,9 @@ def display_logo(font: Font, screen: Surface) -> None:
     screen.blit(logo, logo_rect)
 
 
-def display_score(font: Font, screen: Surface, current_time: int) -> int:
+def display_score(font: Font, screen: Surface, score: int) -> int:
     '''游戏分数'''
     pygame.time.get_ticks()
-    score = int(pygame.time.get_ticks() / 1000) - current_time
     score_surf = font.render(f'得分：{score}', False, (0, 0, 0))
     score_rect = score_surf.get_rect(midbottom=(SCREEN_WIDTH/2, 150))
     screen.blit(score_surf, score_rect)

@@ -1,5 +1,6 @@
 import pygame
 from pygame.math import Vector2
+from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -18,3 +19,8 @@ class Bullet(pygame.sprite.Sprite):
         """更新子弹位置"""
         self.position += self.direction * self.speed
         self.rect.center = self.position
+        self.destroy()
+
+    def destroy(self):
+        if self.rect.left > SCREEN_WIDTH or self.rect.right < 0 or self.rect.top > SCREEN_HEIGHT or self.rect.bottom < 0:  # 子弹超出屏幕范围
+            self.kill()
